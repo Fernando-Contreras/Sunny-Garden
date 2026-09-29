@@ -273,6 +273,47 @@
     font-size: 1.5rem;
     color: var(--ink);
   }
+  .garden-scene {
+    position: relative;
+    margin: 0 1.5rem 1rem;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #dff0f7 0%, #fdf1e3 32%, #b9d9a3 33%, #8fbf7a 100%);
+    border: 1px solid var(--rose-light);
+  }
+  .garden-sun { position: absolute; top: 10px; right: 16px; font-size: 1.8rem; }
+  .garden-butterfly { position: absolute; top: 60px; left: 12%; font-size: 1.2rem; animation: flutter 7s ease-in-out infinite; }
+  @keyframes flutter {
+    0%,100% { transform: translate(0,0); }
+    50%     { transform: translate(120px,-14px); }
+  }
+  .garden-deco { position: absolute; font-size: 1rem; opacity: 0.85; pointer-events: none; }
+  .garden-rose {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    transform-origin: bottom center;
+    background: none;
+    border: none;
+    font-size: 2.1rem;
+    line-height: 1;
+    cursor: pointer;
+    animation: sway 4s ease-in-out infinite;
+    filter: drop-shadow(0 3px 2px rgba(60,80,40,0.25));
+  }
+  .garden-rose.selected { font-size: 2.6rem; }
+  .garden-hint {
+    position: absolute; left: 0; right: 0; bottom: 10px;
+    text-align: center; font-size: 0.8rem; color: #4c6b3c; font-style: italic;
+  }
+  .rose-detail {
+    display: none;
+    margin: 0 1.5rem 1rem;
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border-left: 3px solid var(--rose);
+  }
+  .rose-detail.show { display: block; }
   .entry-card {
     margin: 0 1.5rem 1rem;
     background: white;
@@ -361,7 +402,7 @@
   <p class="landing-sub">A quiet place to notice beauty.<br>No likes. No comments. Just roses.</p>
   <div class="name-group">
     <label>Your name or nickname</label>
-    <input type="text" id="input-name" placeholder="e.g. Meli, Dad, Luna..." maxlength="30">
+    <input type="text" id="input-name" placeholder="e.g. Meli, Sunny, Sadie..." maxlength="30">
   </div>
   <button class="btn-rose" onclick="startJourney()">Plant my garden 🌱</button>
   <br>
@@ -405,6 +446,8 @@
 
 <div class="screen" id="s-garden">
   <div class="garden-header">My garden 🌸</div>
+  <div class="garden-scene" id="garden-scene"></div>
+  <div class="rose-detail" id="garden-detail"></div>
   <div id="entries-list"></div>
   <nav class="nav-bar">
     <button class="nav-item" onclick="showScreen('s-home',this)">
@@ -421,6 +464,8 @@
     <div class="read-owner" id="read-owner-name"></div>
     <div class="read-sub">their roses 🌹</div>
   </div>
+  <div class="garden-scene" id="read-scene"></div>
+  <div class="rose-detail" id="read-detail"></div>
   <div id="read-entries-list"></div>
   <div style="text-align:center; padding: 1.5rem;">
     <p style="font-size:0.85rem; color:var(--ink-soft); font-style:italic; margin-bottom:1rem;">
@@ -550,7 +595,71 @@ function submitAnswer() {
   showToast('Your rose is planted 🌹');
 }
 
+function renderScene(entries, sceneId, detailId) {
+  const scene = document.getElementById(sceneId);
+  const detail = document.getElementById(detailId);
+  detail.classList.remove('show');
+  scene.innerHTML = '';
+  const oldestFirst = entries.slice().reverse();
+  const perRow = 5;
+  const rows = Math.max(1, Math.ceil(oldestFirst.length / perRow));
+  const height = Math.max(260, 150 + rows * 70);
+  scene.style.height = height + 'px';
+
+  const sun = document.createElement('div');
+  sun.className = 'garden-sun'; sun.textContent = '☀️';
+  scene.appendChild(sun);
+  const bf = document.createElement('div');
+  bf.className = 'garden-butterfly'; bf.textContent = '🦋';
+  scene.appendChild(bf);
+
+  const decoIcons = ['🌱','🌷','🌼','🌿','🌸'];
+  for (let i = 0; i < 14; i++) {
+    const d = document.createElement('div');
+    d.className = 'garden-deco';
+    d.textContent = decoIcons[i % decoIcons.length];
+    d.style.left = ((i * 37) % 92 + 2) + '%';
+    d.style.top = (38 + ((i * 53) % 55)) + '%';
+    scene.appendChild(d);
+  }
+
+  const grassTop = height * 0.33;
+  const grassH = height - grassTop;
+  oldestFirst.forEach((e, i) => {
+    const row = Math.floor(i / perRow);
+    const col = i % perRow;
+    const jx = ((i * 29) % 9) - 4;
+    const x = 12 + col * 19 + jx + (row % 2 ? 6 : 0);
+    const y = grassTop + 55 + (row / rows) * (grassH - 75) + ((i * 13) % 10);
+    const b = document.createElement('button');
+    b.className = 'garden-rose';
+    b.textContent = '🌹';
+    b.style.left = Math.min(x, 92) + '%';
+    b.style.top = y + 'px';
+    b.style.animationDelay = ((i % 5) * 0.4) + 's';
+    b.setAttribute('aria-label', 'Rose from ' + formatDate(e.date));
+    b.onclick = () => {
+      scene.querySelectorAll('.garden-rose').forEach(r => r.classList.remove('selected'));
+      b.classList.add('selected');
+      detail.innerHTML = '';
+      const dt = document.createElement('div'); dt.className = 'entry-card-date'; dt.textContent = formatDate(e.date);
+      const q = document.createElement('div'); q.className = 'entry-card-q'; q.textContent = e.question;
+      const a = document.createElement('div'); a.className = 'entry-card-a'; a.textContent = e.answer;
+      detail.append(dt, q, a);
+      detail.classList.add('show');
+      detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+    scene.appendChild(b);
+  });
+
+  const hint = document.createElement('div');
+  hint.className = 'garden-hint';
+  hint.textContent = oldestFirst.length ? 'Tap a rose to read it 🌹' : 'Your garden is waiting for its first rose 🌱';
+  scene.appendChild(hint);
+}
+
 function showGarden() {
+  renderScene(state.entries, 'garden-scene', 'garden-detail');
   const list = document.getElementById('entries-list');
   if (!state.entries.length) {
     list.innerHTML = '<div class="empty-garden">No roses yet...<br>Answer today\'s question to plant your first 🌱</div>';
@@ -593,6 +702,9 @@ function showReadPrompt() {
 function readGarden(gardenId, ownerName) {
   const data = loadState(gardenId);
   document.getElementById('read-owner-name').textContent = decodeURIComponent(ownerName) + "'s garden";
+  renderScene(data.entries || [], 'read-scene', 'read-detail');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-read').classList.add('active');
   const list = document.getElementById('read-entries-list');
   if (!data.entries || !data.entries.length) {
     list.innerHTML = '<div class="empty-garden">No roses here yet...<br>Maybe check back tomorrow 🌱</div>';
