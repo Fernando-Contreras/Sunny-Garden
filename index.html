@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find a Rose</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --rose: #b85c6e;
+    --rose-light: #f5dde3;
+    --rose-pale: #fdf6f7;
+    --stem: #5c7a5c;
+    --ink: #2a1f1f;
+    --ink-soft: #6b5555;
+    --ink-faint: #c4aeae;
+    --parchment: #fdf8f2;
+    --parchment-dark: #f0e8dc;
+    --gold: #c9934a;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  #s-landing {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--parchment);
+    position: relative;
+    overflow: hidden;
+  }
+  #s-landing::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, #f5dde388 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .landing-rose {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: sway 4s ease-in-out infinite;
+  }
+  @keyframes sway {
+    0%,100% { transform: rotate(-3deg); }
+    50%      { transform: rotate(3deg); }
+  }
+  .landing-title {
+    font-family: 'Lora', serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    color: var(--rose);
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+  .landing-sub {
+    font-size: 1rem;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    max-width: 320px;
+    margin: 0 auto 2.5rem;
+    font-style: italic;
+  }
+  .name-group {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto 1.25rem;
+  }
+  .name-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+  .name-group input {
+    width: 100%;
+    padding: 0.85rem 1.1rem;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 12px;
+    background: white;
+    font-family: 'Lora', serif;
+    font-size: 1.05rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .name-group input:focus { border-color: var(--rose); }
+  .btn-rose {
+    background: var(--rose);
+    color: white;
+    border: none;
+    padding: 0.9rem 2.5rem;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .btn-rose:hover { background: #a04d5e; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1.5px solid var(--ink-faint);
+    padding: 0.75rem 2rem;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    margin-top: 0.75rem;
+  }
+  .btn-ghost:hover { border-color: var(--rose); color: var(--rose); }
+
+  #s-home {
+    background: var(--parchment);
+    padding: 0;
+  }
+  .home-header {
+    padding: 2rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--parchment-dark);
+  }
+  .home-greeting {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .home-name {
+    font-family: 'Lora', serif;
+    font-size: 1.6rem;
+    color: var(--ink);
+  }
+  .question-card {
+    margin: 1.5rem;
+    background: white;
+    border-radius: 20px;
+    padding: 1.75rem;
+    border: 1px solid var(--rose-light);
+    position: relative;
+    overflow: hidden;
+  }
+  .question-card::before {
+    content: '🌹';
+    position: absolute;
+    top: -12px; right: -8px;
+    font-size: 4rem;
+    opacity: 0.12;
+    transform: rotate(15deg);
+  }
+  .question-date {
+    font-size: 0.75rem;
+    color: var(--rose);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+  .question-text {
+    font-family: 'Lora', serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: var(--ink);
+    font-style: italic;
+    margin-bottom: 1.5rem;
+  }
+  .answer-area {
+    width: 100%;
+    border: 1.5px solid var(--parchment-dark);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--parchment);
+    resize: none;
+    outline: none;
+    min-height: 100px;
+    line-height: 1.7;
+    transition: border-color 0.2s;
+  }
+  .answer-area:focus { border-color: var(--rose); background: white; }
+  .submit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+  .share-section {
+    margin: 0 1.5rem 1.5rem;
+    background: var(--parchment-dark);
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+  .share-label {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .share-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid var(--ink-faint);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+  }
+  .share-link span {
+    flex: 1;
+    font-size: 0.8rem;
+    color: var(--rose);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: monospace;
+  }
+  .copy-btn {
+    background: var(--rose);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .nav-bar {
+    display: flex;
+    border-top: 1px solid var(--parchment-dark);
+    background: white;
+    position: sticky;
+    bottom: 0;
+  }
+  .nav-item {
+    flex: 1;
+    padding: 0.85rem;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+    transition: color 0.15s;
+    border: none;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-item.active, .nav-item:hover { color: var(--rose); }
+  .nav-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+
+  #s-garden { background: var(--parchment); padding-bottom: 80px; }
+  .garden-header {
+    padding: 2rem 1.5rem 1rem;
+    font-family: 'Lora', serif;
+    font-size: 1.5rem;
+    color: var(--ink);
+  }
+  .entry-card {
+    margin: 0 1.5rem 1rem;
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border-left: 3px solid var(--rose);
+  }
+  .entry-card-date {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.05em;
+  }
+  .entry-card-q {
+    font-size: 0.85rem;
+    color: var(--rose);
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+  .entry-card-a {
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .empty-garden {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-family: 'Lora', serif;
+  }
+
+  #s-read { background: var(--parchment); padding-bottom: 80px; }
+  .read-header {
+    padding: 2rem 1.5rem 1rem;
+    text-align: center;
+  }
+  .read-owner {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem;
+    color: var(--rose);
+    margin-bottom: 0.25rem;
+  }
+  .read-sub {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: white;
+    padding: 0.6rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .notif-banner {
+    margin: 0 1.5rem 1rem;
+    background: #fff8e6;
+    border: 1px solid #f0d080;
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    font-size: 0.85rem;
+    color: #7a5c00;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="s-landing">
+  <div class="landing-rose">🌹</div>
+  <h1 class="landing-title">Find a Rose</h1>
+  <p class="landing-sub">A quiet place to notice beauty.<br>No likes. No comments. Just roses.</p>
+  <div class="name-group">
+    <label>Your name or nickname</label>
+    <input type="text" id="input-name" placeholder="e.g. Meli, papá, Jo..." maxlength="30">
+  </div>
+  <button class="btn-rose" onclick="startJourney()">Plant my garden 🌱</button>
+  <br>
+  <button class="btn-ghost" onclick="showReadPrompt()">Read someone's garden →</button>
+</div>
+
+<div class="screen" id="s-home">
+  <div class="home-header">
+    <div class="home-greeting">Good day,</div>
+    <div class="home-name" id="home-name-display"></div>
+  </div>
+
+  <div id="notif-area"></div>
+
+  <div class="question-card">
+    <div class="question-date" id="q-date"></div>
+    <div class="question-text" id="q-text"></div>
+    <textarea class="answer-area" id="answer-input" placeholder="Write freely, like talking to a trusted friend..."></textarea>
+    <div class="submit-row">
+      <button class="btn-rose" id="submit-btn" onclick="submitAnswer()">Leave this rose 🌹</button>
+    </div>
+  </div>
+
+  <div class="share-section">
+    <div class="share-label">Your garden link — share with loved ones</div>
+    <div class="share-link">
+      <span id="share-url-display"></span>
+      <button class="copy-btn" onclick="copyLink()">Copy</button>
+    </div>
+  </div>
+
+  <nav class="nav-bar">
+    <button class="nav-item active" onclick="showScreen('s-home',this)">
+      <span class="nav-icon">🏡</span>Today
+    </button>
+    <button class="nav-item" onclick="showScreen('s-garden',this)">
+      <span class="nav-icon">📖</span>My roses
+    </button>
+  </nav>
+</div>
+
+<div class="screen" id="s-garden">
+  <div class="garden-header">My garden 🌸</div>
+  <div id="entries-list"></div>
+  <nav class="nav-bar">
+    <button class="nav-item" onclick="showScreen('s-home',this)">
+      <span class="nav-icon">🏡</span>Today
+    </button>
+    <button class="nav-item active" onclick="showScreen('s-garden',this)">
+      <span class="nav-icon">📖</span>My roses
+    </button>
+  </nav>
+</div>
+
+<div class="screen" id="s-read">
+  <div class="read-header">
+    <div class="read-owner" id="read-owner-name"></div>
+    <div class="read-sub">their roses 🌹</div>
+  </div>
+  <div id="read-entries-list"></div>
+  <div style="text-align:center; padding: 1.5rem;">
+    <p style="font-size:0.85rem; color:var(--ink-soft); font-style:italic; margin-bottom:1rem;">
+      If something moves you, reach out to them directly. 💌
+    </p>
+    <button class="btn-ghost" onclick="goToMyGarden()">Back to my garden</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QUESTIONS = [
+  "Did you find a rose today? Tell me — what color was it, where did it appear?",
+  "What small thing made you pause today, even for just a moment?",
+  "If today had a scent, what would it be?",
+  "What's something you noticed today that you almost walked past without seeing?",
+  "Did anything make you smile when no one was watching?",
+  "What texture did today feel like?",
+  "Was there a moment of unexpected quiet today? What was in it?",
+  "What's one thing you're grateful for that you haven't told anyone?",
+  "If you could bottle one moment from today, which would it be?",
+  "What made you feel like yourself today?",
+  "Did anything remind you of someone you love?",
+  "What's the most honest thing you felt today?",
+  "Where did you find softness today?",
+  "Did the light do anything beautiful today?",
+  "What conversation — even a small one — stayed with you?",
+];
+
+let state = {
+  userName: null,
+  userId: null,
+  entries: [],
+  notifGranted: false,
+};
+
+function getStorageKey(uid) { return 'rose_garden_' + uid; }
+
+function loadState(uid) {
+  try {
+    const raw = localStorage.getItem(getStorageKey(uid));
+    return raw ? JSON.parse(raw) : { entries: [] };
+  } catch(e) { return { entries: [] }; }
+}
+
+function saveState(uid, data) {
+  try { localStorage.setItem(getStorageKey(uid), JSON.stringify(data)); } catch(e) {}
+}
+
+function makeUserId(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g,'') + '_' + Math.random().toString(36).slice(2,8);
+}
+
+function getOrCreateUserId(name) {
+  let uid = localStorage.getItem('rose_uid');
+  let uname = localStorage.getItem('rose_uname');
+  if (uid && uname) return { uid, name: uname };
+  uid = makeUserId(name);
+  localStorage.setItem('rose_uid', uid);
+  localStorage.setItem('rose_uname', name);
+  return { uid, name };
+}
+
+function startJourney() {
+  const nameInput = document.getElementById('input-name').value.trim();
+  if (!nameInput) { showToast('Write your name first 🌱'); return; }
+  const { uid, name } = getOrCreateUserId(nameInput);
+  state.userName = name;
+  state.userId = uid;
+  state.entries = loadState(uid).entries || [];
+  showHome();
+}
+
+function showHome() {
+  document.getElementById('home-name-display').textContent = state.userName;
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  document.getElementById('q-date').textContent = dateStr;
+  const qIndex = Math.abs(hashDay(today)) % QUESTIONS.length;
+  document.getElementById('q-text').textContent = QUESTIONS[qIndex];
+  const shareUrl = buildShareUrl();
+  document.getElementById('share-url-display').textContent = shareUrl;
+
+  const todayKey = today.toISOString().slice(0,10);
+  const alreadyAnswered = state.entries.find(e => e.date === todayKey);
+  if (alreadyAnswered) {
+    document.getElementById('answer-input').value = alreadyAnswered.answer;
+    document.getElementById('submit-btn').textContent = '✓ Rose left today';
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').style.background = 'var(--stem)';
+  }
+
+  askNotifPermission();
+  showScreen('s-home', document.querySelector('.nav-item'));
+}
+
+function hashDay(date) {
+  const s = date.toISOString().slice(0,10);
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
+}
+
+function buildShareUrl() {
+  const base = window.location.href.split('?')[0];
+  return base + '?garden=' + state.userId + '&owner=' + encodeURIComponent(state.userName);
+}
+
+function copyLink() {
+  const url = buildShareUrl();
+  navigator.clipboard.writeText(url).then(() => showToast('Link copied! 🌸'));
+}
+
+function submitAnswer() {
+  const answer = document.getElementById('answer-input').value.trim();
+  if (!answer) { showToast('Write something first...'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const q = document.getElementById('q-text').textContent;
+  const entry = { date: today, question: q, answer };
+  state.entries = state.entries.filter(e => e.date !== today);
+  state.entries.unshift(entry);
+  saveState(state.userId, { entries: state.entries });
+  document.getElementById('submit-btn').textContent = '✓ Rose left today';
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('submit-btn').style.background = 'var(--stem)';
+  showToast('Your rose is planted 🌹');
+}
+
+function showGarden() {
+  const list = document.getElementById('entries-list');
+  if (!state.entries.length) {
+    list.innerHTML = '<div class="empty-garden">No roses yet...<br>Answer today\'s question to plant your first 🌱</div>';
+  } else {
+    list.innerHTML = state.entries.map(e => `
+      <div class="entry-card">
+        <div class="entry-card-date">${formatDate(e.date)}</div>
+        <div class="entry-card-q">${e.question}</div>
+        <div class="entry-card-a">${e.answer}</div>
+      </div>`).join('');
+  }
+}
+
+function formatDate(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+function showScreen(id, navBtn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navBtn) navBtn.classList.add('active');
+  if (id === 's-garden') showGarden();
+  window.scrollTo(0,0);
+}
+
+function showReadPrompt() {
+  const uid = prompt('Paste the garden link or just the garden ID:');
+  if (!uid) return;
+  let gardenId = uid;
+  let ownerName = 'their';
+  if (uid.includes('garden=')) {
+    const u = new URL(uid.includes('http') ? uid : 'https://x.com/?' + uid.split('?')[1]);
+    gardenId = u.searchParams.get('garden');
+    ownerName = u.searchParams.get('owner') || 'their';
+  }
+  readGarden(gardenId, ownerName);
+}
+
+function readGarden(gardenId, ownerName) {
+  const data = loadState(gardenId);
+  document.getElementById('read-owner-name').textContent = decodeURIComponent(ownerName) + "'s garden";
+  const list = document.getElementById('read-entries-list');
+  if (!data.entries || !data.entries.length) {
+    list.innerHTML = '<div class="empty-garden">No roses here yet...<br>Maybe check back tomorrow 🌱</div>';
+  } else {
+    list.innerHTML = data.entries.map(e => `
+      <div class="entry-card">
+        <div class="entry-card-date">${formatDate(e.date)}</div>
+        <div class="entry-card-q">${e.question}</div>
+        <div class="entry-card-a">${e.answer}</div>
+      </div>`).join('');
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-read').classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goToMyGarden() {
+  if (state.userId) {
+    showHome();
+  } else {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('s-landing').classList.add('active');
+  }
+}
+
+function askNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') { scheduleNotif(); return; }
+  if (Notification.permission === 'denied') return;
+  const area = document.getElementById('notif-area');
+  area.innerHTML = `
+    <div class="notif-banner">
+      🔔 <div>
+        <strong>Daily rose reminders?</strong><br>
+        Get a gentle nudge each day to notice something beautiful.
+        <br><button class="btn-rose" style="margin-top:0.6rem; padding:0.45rem 1.2rem; font-size:0.85rem;" onclick="requestNotif()">Yes, remind me</button>
+      </div>
+    </div>`;
+}
+
+function requestNotif() {
+  Notification.requestPermission().then(p => {
+    document.getElementById('notif-area').innerHTML = '';
+    if (p === 'granted') { scheduleNotif(); showToast('Reminders on 🌹'); }
+  });
+}
+
+function scheduleNotif() {
+  if (Notification.permission !== 'granted') return;
+  const now = new Date();
+  const target = new Date();
+  target.setHours(9, 0, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  const delay = target - now;
+  setTimeout(() => {
+    new Notification('Find a Rose 🌹', {
+      body: 'Did you find a rose today?',
+      icon: 'https://cdn.jsdelivr.net/npm/twemoji@14/2/svg/1f339.svg'
+    });
+    scheduleNotif();
+  }, delay);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const garden = params.get('garden');
+  const owner = params.get('owner');
+  if (garden) {
+    readGarden(garden, owner || 'their');
+    return;
+  }
+  const savedUid = localStorage.getItem('rose_uid');
+  const savedName = localStorage.getItem('rose_uname');
+  if (savedUid && savedName) {
+    state.userName = savedName;
+    state.userId = savedUid;
+    state.entries = loadState(savedUid).entries || [];
+    showHome();
+  }
+});
+</script>
+</body>
+</html>
