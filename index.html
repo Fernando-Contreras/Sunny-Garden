@@ -276,34 +276,69 @@
   .garden-scene {
     position: relative;
     margin: 0 1.5rem 1rem;
-    border-radius: 20px;
+    border-radius: 18px;
     overflow: hidden;
-    background: linear-gradient(to bottom, #dff0f7 0%, #fdf1e3 32%, #b9d9a3 33%, #8fbf7a 100%);
-    border: 1px solid var(--rose-light);
+    border: 2px solid #4a2b3d;
+    box-shadow: 0 6px 18px rgba(90,50,70,0.25);
+    background: #f3b9cb;
+    line-height: 0;
   }
-  .garden-sun { position: absolute; top: 10px; right: 16px; font-size: 1.8rem; }
-  .garden-butterfly { position: absolute; top: 60px; left: 12%; font-size: 1.2rem; animation: flutter 7s ease-in-out infinite; }
-  @keyframes flutter {
-    0%,100% { transform: translate(0,0); }
-    50%     { transform: translate(120px,-14px); }
+  .garden-scene svg { display: block; width: 100%; height: auto; }
+  .garden-scene .cloud { animation: drift 16s ease-in-out infinite; }
+  @keyframes drift {
+    0%,100% { transform: translateX(-10px); }
+    50%     { transform: translateX(14px); }
   }
-  .garden-deco { position: absolute; font-size: 1rem; opacity: 0.85; pointer-events: none; }
-  .garden-rose {
-    position: absolute;
-    transform: translate(-50%, -100%);
-    transform-origin: bottom center;
-    background: none;
-    border: none;
-    font-size: 2.1rem;
-    line-height: 1;
-    cursor: pointer;
-    animation: sway 4s ease-in-out infinite;
-    filter: drop-shadow(0 3px 2px rgba(60,80,40,0.25));
+  .garden-scene .sun-rays { animation: spin 70s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .garden-scene .twinkle {
+    transform-box: fill-box; transform-origin: center;
+    animation: twinkle 3.4s ease-in-out infinite;
   }
-  .garden-rose.selected { font-size: 2.6rem; }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.15; transform: scale(0.6); }
+    50%     { opacity: 1;    transform: scale(1.1); }
+  }
+  .garden-scene .bfly { animation: bflyMove 16s ease-in-out infinite; }
+  @keyframes bflyMove {
+    0%,100% { transform: translate(40px,72px); }
+    25%     { transform: translate(140px,52px); }
+    50%     { transform: translate(250px,92px); }
+    75%     { transform: translate(160px,124px); }
+  }
+  .garden-scene .flap {
+    transform-box: fill-box; transform-origin: center;
+    animation: flap 0.45s ease-in-out infinite alternate;
+  }
+  @keyframes flap { from { transform: scaleX(1); } to { transform: scaleX(0.3); } }
+  .garden-scene .rose { cursor: pointer; outline: none; }
+  .garden-scene .rose-sway {
+    transform-box: fill-box; transform-origin: 50% 100%;
+    animation: roseSway 4.5s ease-in-out infinite;
+  }
+  @keyframes roseSway {
+    0%,100% { transform: rotate(-2.5deg); }
+    50%     { transform: rotate(2.5deg); }
+  }
+  .garden-scene .rose-pop {
+    transform-box: fill-box; transform-origin: 50% 100%;
+    transition: transform 0.25s;
+  }
+  .garden-scene .rose.selected .rose-pop { transform: scale(1.22); }
+  .garden-scene .rose-glow { opacity: 0.45; animation: glowPulse 3.5s ease-in-out infinite; }
+  @keyframes glowPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.65; } }
+  .garden-scene .rose:hover .rose-glow,
+  .garden-scene .rose:focus-visible .rose-glow { opacity: 0.9; animation: none; }
+  .garden-scene .rose.selected .rose-glow { opacity: 1; animation: none; }
   .garden-hint {
-    position: absolute; left: 0; right: 0; bottom: 10px;
-    text-align: center; font-size: 0.8rem; color: #4c6b3c; font-style: italic;
+    position: absolute; left: 0; right: 0; bottom: 12px;
+    text-align: center; font-family: 'Lora', serif; font-size: 0.85rem; line-height: 1.3;
+    color: #fff8ec; font-style: italic;
+    text-shadow: 0 1px 3px rgba(60,30,50,0.7);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .garden-scene * { animation: none !important; }
   }
   .rose-detail {
     display: none;
@@ -595,52 +630,137 @@ function submitAnswer() {
   showToast('Your rose is planted 🌹');
 }
 
+const INK = '#3a1a2a';
+const ROSE_COLORS = [
+  ['#d94a5f', '#a92a45', '#ee7a8a'],
+  ['#f29aae', '#d8617c', '#ffc9d3'],
+  ['#fff0d6', '#e8b98f', '#fffaf0'],
+  ['#c93a6a', '#8e2348', '#e56b94'],
+];
+
+function sceneRand(n) {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function roseDef(p) {
+  return `<g id="${p}rose">
+    <path d="M0 0 C-2 -14 3 -26 0 -34" fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
+    <path d="M0 0 C-2 -14 3 -26 0 -34" fill="none" stroke="#3f7a4c" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M0 -10 C-10 -16 -17 -10 -15 -4 C-9 -4 -4 -6 0 -10Z" fill="#5e9a5a" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M0 -20 C10 -26 17 -20 15 -14 C9 -14 4 -16 0 -20Z" fill="#6fae64" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
+    <g transform="translate(0 -42)" stroke="${INK}" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M-13 -2 C-15 -14 -5 -17 0 -16 C5 -17 15 -14 13 -2 C12 8 5 12 0 12 C-5 12 -12 8 -13 -2Z" style="fill:var(--p2)" stroke-width="1.7"/>
+      <path d="M-11 -3 C-10 -11 -3 -13 0 -9 C-3 -3 -4 4 -2 9 C-8 8 -12 4 -11 -3Z" style="fill:var(--p1)" stroke-width="1.3"/>
+      <path d="M11 -3 C10 -11 3 -13 0 -9 C3 -3 4 4 2 9 C8 8 12 4 11 -3Z" style="fill:var(--p1)" stroke-width="1.3"/>
+      <path d="M-7 2 C-6 9 6 9 7 2 C3 5 -3 5 -7 2Z" style="fill:var(--p3)" stroke-width="1.2"/>
+      <path d="M-4 -6 C0 -11 6 -8 5 -3 C4 2 -3 3 -3 -1 C-3 -4 1 -4 2 -2" fill="none" stroke-width="1.3"/>
+      <path d="M-9 -8 C-7 -12 -3 -14 0 -14" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.6"/>
+    </g>
+  </g>`;
+}
+
 function renderScene(entries, sceneId, detailId) {
   const scene = document.getElementById(sceneId);
   const detail = document.getElementById(detailId);
   detail.classList.remove('show');
-  scene.innerHTML = '';
-  const oldestFirst = entries.slice().reverse();
+  const p = sceneId + '-';
+  const oldest = entries.slice().reverse();
   const perRow = 5;
-  const rows = Math.max(1, Math.ceil(oldestFirst.length / perRow));
-  const height = Math.max(260, 150 + rows * 70);
-  scene.style.height = height + 'px';
+  const rows = Math.max(1, Math.ceil(oldest.length / perRow));
+  const W = 340;
+  const H = Math.max(300, 200 + rows * 70);
+  const hz = Math.round(H * 0.38);
 
-  const sun = document.createElement('div');
-  sun.className = 'garden-sun'; sun.textContent = '☀️';
-  scene.appendChild(sun);
-  const bf = document.createElement('div');
-  bf.className = 'garden-butterfly'; bf.textContent = '🦋';
-  scene.appendChild(bf);
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A garden of roses">`;
+  s += `<defs>
+    <linearGradient id="${p}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a99bd8"/><stop offset="0.45" stop-color="#f3b9cb"/><stop offset="1" stop-color="#fde6c4"/></linearGradient>
+    <radialGradient id="${p}sunglow"><stop offset="0" stop-color="#fff6d6" stop-opacity="0.95"/><stop offset="0.35" stop-color="#fdd9b0" stop-opacity="0.45"/><stop offset="1" stop-color="#fdd9b0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="${p}far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9a9dc"/><stop offset="1" stop-color="#e9c9dc"/></linearGradient>
+    <linearGradient id="${p}mid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8d9a8"/><stop offset="1" stop-color="#7fb686"/></linearGradient>
+    <linearGradient id="${p}meadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d48f"/><stop offset="0.5" stop-color="#63a06c"/><stop offset="1" stop-color="#3d7853"/></linearGradient>
+    <linearGradient id="${p}mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="${p}glow"><stop offset="0" stop-color="#ffe6b0" stop-opacity="0.95"/><stop offset="1" stop-color="#ffd0c0" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${p}vig" cx="0.5" cy="0.5" r="0.75"><stop offset="0.6" stop-color="#4a1f3c" stop-opacity="0"/><stop offset="1" stop-color="#4a1f3c" stop-opacity="0.4"/></radialGradient>
+    <filter id="${p}grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4"/><feColorMatrix type="matrix" values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.15  0 0 0 0.22 0"/></filter>
+    ${roseDef(p)}
+  </defs>`;
 
-  const decoIcons = ['🌱','🌷','🌼','🌿','🌸'];
-  for (let i = 0; i < 14; i++) {
-    const d = document.createElement('div');
-    d.className = 'garden-deco';
-    d.textContent = decoIcons[i % decoIcons.length];
-    d.style.left = ((i * 37) % 92 + 2) + '%';
-    d.style.top = (38 + ((i * 53) % 55)) + '%';
-    scene.appendChild(d);
+  // Sky, sun, rays
+  const sx = 250, sy = hz - 62;
+  s += `<rect width="${W}" height="${H}" fill="url(#${p}sky)"/>`;
+  s += `<circle cx="${sx}" cy="${sy}" r="120" fill="url(#${p}sunglow)"/>`;
+  s += `<g class="sun-rays" style="transform-origin:${sx}px ${sy}px" fill="#fff3c8" opacity="0.35">`;
+  for (let i = 0; i < 12; i++) s += `<polygon points="-3,-32 3,-32 0,-78" transform="translate(${sx} ${sy}) rotate(${i * 30})"/>`;
+  s += `</g><circle cx="${sx}" cy="${sy}" r="19" fill="#fff8dd"/>`;
+
+  // Clouds
+  const cloud = (x, y, sc, d) => `<g transform="translate(${x} ${y}) scale(${sc})"><g class="cloud" style="animation-delay:-${d}s">
+    <ellipse cx="0" cy="4" rx="30" ry="8" fill="#f6c6d4" opacity="0.8"/>
+    <g fill="#fff7ee" opacity="0.95"><ellipse cx="0" cy="0" rx="28" ry="9"/><ellipse cx="-14" cy="-6" rx="14" ry="10"/><ellipse cx="6" cy="-10" rx="16" ry="12"/><ellipse cx="20" cy="-4" rx="12" ry="8"/></g></g></g>`;
+  s += cloud(70, hz * 0.32, 1.1, 3) + cloud(165, hz * 0.55, 0.8, 9) + cloud(300, hz * 0.22, 0.7, 6);
+
+  // Sparkles
+  const star = 'M0 -4 C0.6 -1 1 -0.6 4 0 C1 0.6 0.6 1 0 4 C-0.6 1 -1 0.6 -4 0 C-1 -0.6 -0.6 -1 0 -4Z';
+  for (let i = 0; i < 18; i++) {
+    const x = sceneRand(i + 1) * W, y = sceneRand(i + 50) * (H * 0.92), sc = 0.7 + sceneRand(i + 90) * 0.9;
+    s += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><path class="twinkle" d="${star}" fill="#fff6c9" style="animation-delay:-${(sceneRand(i + 7) * 3.4).toFixed(2)}s;animation-duration:${(2.6 + sceneRand(i + 11) * 2).toFixed(1)}s"/></g>`;
   }
 
-  const grassTop = height * 0.33;
-  const grassH = height - grassTop;
-  oldestFirst.forEach((e, i) => {
-    const row = Math.floor(i / perRow);
-    const col = i % perRow;
-    const jx = ((i * 29) % 9) - 4;
-    const x = 12 + col * 19 + jx + (row % 2 ? 6 : 0);
-    const y = grassTop + 55 + (row / rows) * (grassH - 75) + ((i * 13) % 10);
-    const b = document.createElement('button');
-    b.className = 'garden-rose';
-    b.textContent = '🌹';
-    b.style.left = Math.min(x, 92) + '%';
-    b.style.top = y + 'px';
-    b.style.animationDelay = ((i % 5) * 0.4) + 's';
-    b.setAttribute('aria-label', 'Rose from ' + formatDate(e.date));
-    b.onclick = () => {
-      scene.querySelectorAll('.garden-rose').forEach(r => r.classList.remove('selected'));
-      b.classList.add('selected');
+  // Hills, mist, meadow
+  s += `<path d="M0 ${hz + 6} C60 ${hz - 26} 110 ${hz - 12} 170 ${hz - 20} C230 ${hz - 28} 290 ${hz - 6} ${W} ${hz - 14} L${W} ${hz + 40} L0 ${hz + 40}Z" fill="url(#${p}far)"/>`;
+  s += `<path d="M0 ${hz + 14} C50 ${hz - 8} 120 ${hz + 2} 190 ${hz - 6} C250 ${hz - 12} 300 ${hz + 8} ${W} ${hz + 2} L${W} ${H} L0 ${H}Z" fill="url(#${p}mid)"/>`;
+  for (let i = 0; i < 8; i++) {
+    const x = 18 + i * 44 + sceneRand(i + 200) * 14, y = hz + 2 + sceneRand(i + 210) * 10, r = 7 + sceneRand(i + 220) * 5;
+    s += `<g fill="#79ab83" opacity="0.8"><rect x="${(x - 1).toFixed(1)}" y="${y.toFixed(1)}" width="2" height="7"/><ellipse cx="${x.toFixed(1)}" cy="${(y - 2).toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * 1.1).toFixed(1)}"/></g>`;
+  }
+  s += `<rect x="0" y="${hz - 12}" width="${W}" height="44" fill="url(#${p}mist)"/>`;
+  s += `<path d="M0 ${hz + 28} C70 ${hz + 14} 140 ${hz + 30} 210 ${hz + 20} C270 ${hz + 12} 310 ${hz + 24} ${W} ${hz + 18} L${W} ${H} L0 ${H}Z" fill="url(#${p}meadow)"/>`;
+  s += `<g fill="#d3ecaa" opacity="0.3"><ellipse cx="70" cy="${hz + 60}" rx="60" ry="9"/><ellipse cx="250" cy="${hz + 90}" rx="70" ry="10"/><ellipse cx="150" cy="${H - 50}" rx="80" ry="10"/></g>`;
+
+  // Foreground items, drawn back-to-front
+  const items = [];
+  const meadowTop = hz + 40;
+  for (let i = 0; i < 24; i++) {
+    const x = sceneRand(i + 300) * W, y = meadowTop + sceneRand(i + 330) * (H - meadowTop - 4);
+    const sc = 0.6 + 0.7 * ((y - hz) / (H - hz));
+    items.push({ y, svg: `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})" fill="#3f8a55" stroke="${INK}" stroke-width="1" stroke-linejoin="round"><path d="M-6 0 C-7 -8 -5 -14 -8 -20 C-2 -14 -2 -7 0 0Z"/><path d="M-1 0 C-2 -12 0 -20 2 -26 C4 -19 3 -10 4 0Z"/><path d="M3 0 C5 -8 8 -13 12 -17 C9 -10 8 -5 8 0Z"/></g>` });
+  }
+  for (let i = 0; i < 7; i++) {
+    const x = 14 + sceneRand(i + 400) * (W - 28), y = meadowTop + 14 + sceneRand(i + 430) * (H - meadowTop - 30);
+    const sc = 0.7 + 0.6 * ((y - hz) / (H - hz));
+    let petals = '';
+    for (let k = 0; k < 6; k++) petals += `<ellipse cx="0" cy="-4" rx="2" ry="3.6" transform="rotate(${k * 60})"/>`;
+    items.push({ y, svg: `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><path d="M0 0 C1 -6 -1 -10 0 -14" fill="none" stroke="#2f6a45" stroke-width="1.3"/><g transform="translate(0 -14)" fill="#fffaf0" stroke="${INK}" stroke-width="0.8">${petals}<circle r="2.2" fill="#f6c344"/></g></g>` });
+  }
+  const top = hz + 62, bottom = H - 34;
+  oldest.forEach((e, i) => {
+    const row = Math.floor(i / perRow), col = i % perRow;
+    const frac = rows > 1 ? row / (rows - 1) : 0.5;
+    const x = 40 + col * (260 / (perRow - 1)) + (row % 2 ? 16 : 0) + (sceneRand(i + 500) * 14 - 7);
+    const y = top + frac * (bottom - top) + (sceneRand(i + 530) * 8 - 4);
+    const sc = 0.8 + 0.35 * frac;
+    const c = ROSE_COLORS[i % ROSE_COLORS.length];
+    items.push({ y, svg: `<g class="rose" data-i="${i}" tabindex="0" role="button" aria-label="Rose from ${formatDate(e.date)}" transform="translate(${Math.min(x, W - 24).toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><g class="rose-sway" style="animation-delay:-${((i % 5) * 0.9).toFixed(1)}s"><g class="rose-pop"><ellipse cx="0" cy="1" rx="12" ry="3" fill="#2b4a36" opacity="0.35"/><circle class="rose-glow" cx="0" cy="-42" r="27" fill="url(#${p}glow)"/><use href="#${p}rose" style="--p1:${c[0]};--p2:${c[1]};--p3:${c[2]}"/><circle cx="0" cy="-42" r="26" fill="transparent"/></g></g></g>` });
+  });
+  items.sort((a, b) => a.y - b.y).forEach(it => { s += it.svg; });
+
+  // Butterfly
+  s += `<g class="bfly"><g class="flap"><path d="M0 0 C-5 -9 -13 -8 -11 -1 C-13 6 -5 7 0 1Z" fill="#8fb8ff" stroke="${INK}" stroke-width="1"/><path d="M0 0 C5 -9 13 -8 11 -1 C13 6 5 7 0 1Z" fill="#b39cff" stroke="${INK}" stroke-width="1"/></g><path d="M0 -4 L0 5" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/></g>`;
+
+  // Paper frame, vignette, grain
+  s += `<rect width="${W}" height="${H}" fill="url(#${p}vig)"/>`;
+  s += `<rect width="${W}" height="${H}" filter="url(#${p}grain)" style="mix-blend-mode:multiply" pointer-events="none"/>`;
+  s += `<rect x="6" y="6" width="${W - 12}" height="${H - 12}" rx="12" fill="none" stroke="#fff3dc" stroke-opacity="0.7" stroke-width="1.2" pointer-events="none"/>`;
+  s += `</svg>`;
+  s += `<div class="garden-hint">${oldest.length ? 'Tap a rose to read it' : 'Your garden is waiting for its first rose'}</div>`;
+  scene.innerHTML = s;
+
+  scene.querySelectorAll('.rose').forEach(g => {
+    const e = oldest[+g.dataset.i];
+    const open = () => {
+      scene.querySelectorAll('.rose').forEach(r => r.classList.remove('selected'));
+      g.classList.add('selected');
       detail.innerHTML = '';
       const dt = document.createElement('div'); dt.className = 'entry-card-date'; dt.textContent = formatDate(e.date);
       const q = document.createElement('div'); q.className = 'entry-card-q'; q.textContent = e.question;
@@ -649,13 +769,9 @@ function renderScene(entries, sceneId, detailId) {
       detail.classList.add('show');
       detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
-    scene.appendChild(b);
+    g.addEventListener('click', open);
+    g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } });
   });
-
-  const hint = document.createElement('div');
-  hint.className = 'garden-hint';
-  hint.textContent = oldestFirst.length ? 'Tap a rose to read it 🌹' : 'Your garden is waiting for its first rose 🌱';
-  scene.appendChild(hint);
 }
 
 function showGarden() {
