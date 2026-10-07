@@ -823,7 +823,7 @@ function shareControls(e, detail, g) {
         e.shared = false;
         showToast('No longer shared');
       } else {
-        if (!confirm('Anyone who visits Sunny Garden may read this sunflower, anonymously: no name, and nothing linking it to you. You can stop sharing it any time.\n\nShare it?')) { btn.disabled = false; return; }
+        if (!confirm('Anyone who visits Sunny Garden may read this sunflower, anonymously: no name, and nothing linking it to you. You can stop sharing it any time, but only from this same browser, so it cannot be undone from another device or a private window.\n\nShare it?')) { btn.disabled = false; return; }
         await rpc('share_entry', { p_key: getShareKey(), p_date: e.date, p_question: e.question, p_answer: e.answer });
         e.shared = true;
         showToast('Shared anonymously 🌻');
@@ -942,7 +942,7 @@ function reportControl(e, detail, g) {
   b.onclick = async () => {
     b.disabled = true;
     try {
-      await rpc('report_entry', { p_id: e.id });
+      await rpc('report_entry', { p_key: getShareKey(), p_id: e.id });
       detail.classList.remove('show');
       g.style.display = 'none';
       showToast('Thanks for letting us know');
@@ -971,27 +971,49 @@ async function unshareAll() {
   }
 }
 
+// Sunflower ids of every garden shown so far this visit, so "visit another garden" doesn't repeat one.
+let seenIds = [];
+let lastGardenIds = [];
+
 async function fetchRandomGarden() {
-  const rows = await rpc('random_garden', { p_key: localStorage.getItem('rose_share_key') });
-  return (rows || []).map(x => ({ id: x.id, date: x.date, question: x.question, answer: x.answer }));
+  const call = seen => rpc('random_garden', { p_key: localStorage.getItem('rose_share_key'), p_seen: seen });
+  let rows = await call(seenIds);
+  if (!rows.length && seenIds.length) {
+    // Visited them all: start the cycle over, but still skip the garden on screen.
+    seenIds = lastGardenIds.slice();
+    rows = await call(seenIds);
+  }
+  const entries = (rows || []).map(x => ({ id: x.id, date: x.date, question: x.question, answer: x.answer }));
+  if (entries.length) {
+    lastGardenIds = entries.map(e => e.id);
+    seenIds = seenIds.concat(lastGardenIds);
+  }
+  return entries;
 }
 
 async function loadShowcase() {
   const box = document.getElementById('showcase');
   try {
     const entries = await fetchRandomGarden();
-    if (!entries.length) { box.hidden = true; return; }
+    if (!entries.length) {
+      if (lastGardenIds.length) showToast("That's the only other garden for now 🌻");
+      else box.hidden = true;
+      return;
+    }
     renderScene(entries, 'showcase-scene', 'showcase-detail', reportControl);
     box.hidden = false;
   } catch (err) {
-    box.hidden = true;
+    if (!lastGardenIds.length) box.hidden = true;
   }
 }
 
 async function showRandomGarden() {
   try {
     const entries = await fetchRandomGarden();
-    if (!entries.length) { showToast('No other gardens are shared yet 🌻'); return; }
+    if (!entries.length) {
+      showToast(lastGardenIds.length ? "That's the only other garden for now 🌻" : 'No other gardens are shared yet 🌻');
+      return;
+    }
     renderScene(entries, 'read-scene', 'read-detail', reportControl);
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('s-read').classList.add('active');
