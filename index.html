@@ -204,47 +204,39 @@
     justify-content: flex-end;
     margin-top: 1rem;
   }
-  .share-section {
-    margin: 0 1.5rem 1.5rem;
-    background: var(--parchment-dark);
-    border-radius: 16px;
-    padding: 1.25rem;
+  .showcase {
+    width: 100%;
+    max-width: 420px;
+    margin: 2.25rem auto 0;
+    text-align: left;
   }
-  .share-label {
+  .showcase[hidden] { display: none; }
+  .showcase .garden-scene, .showcase .flower-detail { margin-left: 0; margin-right: 0; }
+  .showcase .btn-ghost { display: block; margin: 0.75rem auto 0; }
+  .showcase-label {
     font-size: 0.75rem;
     color: var(--ink-soft);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
+    text-align: center;
   }
-  .share-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: white;
-    border: 1px solid var(--ink-faint);
-    border-radius: 10px;
-    padding: 0.6rem 0.75rem;
-  }
-  .share-link span {
-    flex: 1;
-    font-size: 0.8rem;
-    color: var(--sun);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: monospace;
-  }
-  .copy-btn {
-    background: var(--sun);
-    color: white;
+  .garden-actions { text-align: center; margin: 0 1.5rem 1rem; }
+  .garden-actions .btn-ghost { margin: 0.25rem; }
+  .share-btn { display: block; margin: 1rem 0 0; font-size: 0.82rem; padding: 0.6rem 1.2rem; }
+  .share-btn:disabled { opacity: 0.6; cursor: default; }
+  .report-btn {
+    display: block;
+    margin-top: 0.9rem;
+    background: none;
     border: none;
-    border-radius: 7px;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.78rem;
+    color: var(--ink-faint);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    text-decoration: underline;
     cursor: pointer;
-    white-space: nowrap;
   }
+  .report-btn:hover { color: var(--ink-soft); }
   .nav-bar {
     display: flex;
     border-top: 1px solid var(--parchment-dark);
@@ -328,6 +320,7 @@
   .garden-scene .flower.selected .flower-pop { transform: scale(1.22); }
   .garden-scene .flower-glow { opacity: 0.45; animation: glowPulse 3.5s ease-in-out infinite; }
   @keyframes glowPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.65; } }
+  .garden-scene .flower.shared .flower-glow { opacity: 0.8; animation: none; }
   .garden-scene .flower:hover .flower-glow,
   .garden-scene .flower:focus-visible .flower-glow { opacity: 0.9; animation: none; }
   .garden-scene .flower.selected .flower-glow { opacity: 1; animation: none; }
@@ -438,11 +431,15 @@
   <p class="landing-sub">A quiet place to notice beauty.<br>No likes. No comments. Just sunflowers.</p>
   <div class="name-group">
     <label>Your name or nickname</label>
-    <input type="text" id="input-name" placeholder="e.g. Meli, Sunny, Sadie..." maxlength="30">
+    <input type="text" id="input-name" placeholder="e.g. Meli, Sonny, Sadie..." maxlength="30">
   </div>
   <button class="btn-sun" onclick="startJourney()">Plant my garden 🌱</button>
-  <br>
-  <button class="btn-ghost" onclick="showReadPrompt()">Read someone's garden →</button>
+  <div class="showcase" id="showcase" hidden>
+    <div class="showcase-label">A garden from someone, somewhere 🌻</div>
+    <div class="garden-scene" id="showcase-scene"></div>
+    <div class="flower-detail" id="showcase-detail"></div>
+    <button class="btn-ghost" onclick="loadShowcase()">Visit another garden</button>
+  </div>
 </div>
 
 <div class="screen" id="s-home">
@@ -462,14 +459,6 @@
     </div>
   </div>
 
-  <div class="share-section">
-    <div class="share-label">Your garden link — share with loved ones</div>
-    <div class="share-link">
-      <span id="share-url-display"></span>
-      <button class="copy-btn" onclick="copyLink()">Copy</button>
-    </div>
-  </div>
-
   <nav class="nav-bar">
     <button class="nav-item active" onclick="showScreen('s-home',this)">
       <span class="nav-icon">🏡</span>Today
@@ -484,6 +473,10 @@
   <div class="garden-header">My garden 🌻</div>
   <div class="garden-scene" id="garden-scene"></div>
   <div class="flower-detail" id="garden-detail"></div>
+  <div class="garden-actions">
+    <button class="btn-ghost" onclick="showRandomGarden()">Visit another garden</button>
+    <button class="btn-ghost" id="unshare-all-btn" onclick="unshareAll()" hidden>Stop sharing everything</button>
+  </div>
   <div id="entries-list"></div>
   <nav class="nav-bar">
     <button class="nav-item" onclick="showScreen('s-home',this)">
@@ -497,16 +490,16 @@
 
 <div class="screen" id="s-read">
   <div class="read-header">
-    <div class="read-owner" id="read-owner-name"></div>
-    <div class="read-sub">their sunflowers 🌻</div>
+    <div class="read-owner">A garden from someone</div>
+    <div class="read-sub">shared anonymously 🌻</div>
   </div>
   <div class="garden-scene" id="read-scene"></div>
   <div class="flower-detail" id="read-detail"></div>
-  <div id="read-entries-list"></div>
   <div style="text-align:center; padding: 1.5rem;">
     <p style="font-size:0.85rem; color:var(--ink-soft); font-style:italic; margin-bottom:1rem;">
-      If something moves you, reach out to them directly. 💌
+      Someone chose to share these. Thank you for reading them. 💛
     </p>
+    <button class="btn-ghost" onclick="showRandomGarden()">Visit another garden</button><br>
     <button class="btn-ghost" onclick="goToMyGarden()">Back to my garden</button>
   </div>
 </div>
@@ -584,9 +577,6 @@ function showHome() {
   document.getElementById('q-date').textContent = dateStr;
   const qIndex = Math.abs(hashDay(today)) % QUESTIONS.length;
   document.getElementById('q-text').textContent = QUESTIONS[qIndex];
-  const shareUrl = buildShareUrl();
-  document.getElementById('share-url-display').textContent = shareUrl;
-
   const todayKey = today.toISOString().slice(0,10);
   const alreadyAnswered = state.entries.find(e => e.date === todayKey);
   if (alreadyAnswered) {
@@ -605,16 +595,6 @@ function hashDay(date) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return h;
-}
-
-function buildShareUrl() {
-  const base = window.location.href.split('?')[0];
-  return base + '?garden=' + state.userId + '&owner=' + encodeURIComponent(state.userName);
-}
-
-function copyLink() {
-  const url = buildShareUrl();
-  navigator.clipboard.writeText(url).then(() => showToast('Link copied! 🌸'));
 }
 
 function submitAnswer() {
@@ -670,7 +650,8 @@ function flowerDef(p) {
   </g>`;
 }
 
-function renderScene(entries, sceneId, detailId) {
+// extra(e, detail, flowerEl), if given, adds controls under the text of an opened sunflower.
+function renderScene(entries, sceneId, detailId, extra) {
   const scene = document.getElementById(sceneId);
   const detail = document.getElementById(detailId);
   detail.classList.remove('show');
@@ -751,7 +732,7 @@ function renderScene(entries, sceneId, detailId) {
     const y = top + frac * (bottom - top) + (sceneRand(i + 530) * 8 - 4);
     const sc = 0.8 + 0.35 * frac;
     const c = FLOWER_COLORS[i % FLOWER_COLORS.length];
-    items.push({ y, svg: `<g class="flower" data-i="${i}" tabindex="0" role="button" aria-label="Sunflower from ${formatDate(e.date)}" transform="translate(${Math.min(x, W - 24).toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><g class="flower-sway" style="animation-delay:-${((i % 5) * 0.9).toFixed(1)}s"><g class="flower-pop"><ellipse cx="0" cy="1" rx="12" ry="3" fill="#2b4a36" opacity="0.35"/><circle class="flower-glow" cx="0" cy="-52" r="34" fill="url(#${p}glow)"/><use href="#${p}flower" style="--p1:${c[0]};--p2:${c[1]};--p3:${c[2]}"/><circle cx="0" cy="-52" r="28" fill="transparent"/></g></g></g>` });
+    items.push({ y, svg: `<g class="flower${e.shared ? ' shared' : ''}" data-i="${i}" tabindex="0" role="button" aria-label="Sunflower from ${formatDate(e.date)}" transform="translate(${Math.min(x, W - 24).toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><g class="flower-sway" style="animation-delay:-${((i % 5) * 0.9).toFixed(1)}s"><g class="flower-pop"><ellipse cx="0" cy="1" rx="12" ry="3" fill="#2b4a36" opacity="0.35"/><circle class="flower-glow" cx="0" cy="-52" r="34" fill="url(#${p}glow)"/><use href="#${p}flower" style="--p1:${c[0]};--p2:${c[1]};--p3:${c[2]}"/><circle cx="0" cy="-52" r="28" fill="transparent"/></g></g></g>` });
   });
   items.sort((a, b) => a.y - b.y).forEach(it => { s += it.svg; });
 
@@ -776,6 +757,7 @@ function renderScene(entries, sceneId, detailId) {
       const q = document.createElement('div'); q.className = 'entry-card-q'; q.textContent = e.question;
       const a = document.createElement('div'); a.className = 'entry-card-a'; a.textContent = e.answer;
       detail.append(dt, q, a);
+      if (extra) extra(e, detail, g);
       detail.classList.add('show');
       detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
@@ -784,8 +766,131 @@ function renderScene(entries, sceneId, detailId) {
   });
 }
 
+const SB_URL = 'https://qupukwwpebnawbtdbibs.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cHVrd3dwZWJuYXdidGRiaWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDQ0MDgsImV4cCI6MjA5NjcyMDQwOH0.IuQgej-fGMIDVuXOR0jjH_YgrTJJtRZKsKRPfZScCZY';
+
+// Per-device secret that proves "this is my sunflower" when unsharing. The server only keeps its hash.
+function getShareKey() {
+  let k = localStorage.getItem('rose_share_key');
+  if (!k) {
+    k = crypto.randomUUID() + crypto.randomUUID();
+    localStorage.setItem('rose_share_key', k);
+  }
+  return k;
+}
+
+async function rpc(fn, args) {
+  const r = await fetch(SB_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+  });
+  if (!r.ok) throw new Error(fn + ' failed: ' + r.status);
+  const text = await r.text();
+  return text ? JSON.parse(text) : null;
+}
+
+function shareControls(e, detail, g) {
+  const btn = document.createElement('button');
+  btn.className = 'btn-ghost share-btn';
+  const paint = () => {
+    btn.textContent = e.shared ? '✓ Shared anonymously — stop sharing' : 'Share this sunflower anonymously';
+    g.classList.toggle('shared', !!e.shared);
+  };
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      if (e.shared) {
+        await rpc('unshare_entry', { p_key: getShareKey(), p_date: e.date });
+        e.shared = false;
+        showToast('No longer shared');
+      } else {
+        if (!confirm('Anyone who visits Sunny Garden may read this sunflower, anonymously: no name, and nothing linking it to you. You can stop sharing it any time.\n\nShare it?')) { btn.disabled = false; return; }
+        await rpc('share_entry', { p_key: getShareKey(), p_date: e.date, p_question: e.question, p_answer: e.answer });
+        e.shared = true;
+        showToast('Shared anonymously 🌻');
+      }
+      saveState(state.userId, { entries: state.entries });
+    } catch (err) {
+      showToast("Couldn't reach the garden right now");
+    }
+    btn.disabled = false;
+    paint();
+    updateShareTools();
+  };
+  paint();
+  detail.appendChild(btn);
+}
+
+function reportControl(e, detail, g) {
+  const b = document.createElement('button');
+  b.className = 'report-btn';
+  b.textContent = 'Report this sunflower';
+  b.onclick = async () => {
+    b.disabled = true;
+    try {
+      await rpc('report_entry', { p_id: e.id });
+      detail.classList.remove('show');
+      g.style.display = 'none';
+      showToast('Thanks for letting us know');
+    } catch (err) {
+      b.disabled = false;
+      showToast("Couldn't send that right now");
+    }
+  };
+  detail.appendChild(b);
+}
+
+function updateShareTools() {
+  document.getElementById('unshare-all-btn').hidden = !state.entries.some(e => e.shared);
+}
+
+async function unshareAll() {
+  if (!confirm('Stop sharing all of your sunflowers? They stay in your garden, but nobody else will be able to read them.')) return;
+  try {
+    await rpc('unshare_all', { p_key: getShareKey() });
+    state.entries.forEach(e => { e.shared = false; });
+    saveState(state.userId, { entries: state.entries });
+    showToast('Nothing is shared now');
+    showGarden();
+  } catch (err) {
+    showToast("Couldn't reach the garden right now");
+  }
+}
+
+async function fetchRandomGarden() {
+  const rows = await rpc('random_garden', { p_key: localStorage.getItem('rose_share_key') });
+  return (rows || []).map(x => ({ id: x.id, date: x.date, question: x.question, answer: x.answer }));
+}
+
+async function loadShowcase() {
+  const box = document.getElementById('showcase');
+  try {
+    const entries = await fetchRandomGarden();
+    if (!entries.length) { box.hidden = true; return; }
+    renderScene(entries, 'showcase-scene', 'showcase-detail', reportControl);
+    box.hidden = false;
+  } catch (err) {
+    box.hidden = true;
+  }
+}
+
+async function showRandomGarden() {
+  try {
+    const entries = await fetchRandomGarden();
+    if (!entries.length) { showToast('No other gardens are shared yet 🌻'); return; }
+    renderScene(entries, 'read-scene', 'read-detail', reportControl);
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('s-read').classList.add('active');
+    window.scrollTo(0, 0);
+  } catch (err) {
+    showToast("Couldn't reach the garden right now");
+  }
+}
+
 function showGarden() {
-  renderScene(state.entries, 'garden-scene', 'garden-detail');
+  renderScene(state.entries, 'garden-scene', 'garden-detail', shareControls);
+  updateShareTools();
   const list = document.getElementById('entries-list');
   if (!state.entries.length) {
     list.innerHTML = '<div class="empty-garden">No sunflowers yet...<br>Answer today\'s question to plant your first 🌱</div>';
@@ -809,41 +914,6 @@ function showScreen(id, navBtn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (navBtn) navBtn.classList.add('active');
   if (id === 's-garden') showGarden();
-  window.scrollTo(0,0);
-}
-
-function showReadPrompt() {
-  const uid = prompt('Paste the garden link or just the garden ID:');
-  if (!uid) return;
-  let gardenId = uid;
-  let ownerName = 'their';
-  if (uid.includes('garden=')) {
-    const u = new URL(uid.includes('http') ? uid : 'https://x.com/?' + uid.split('?')[1]);
-    gardenId = u.searchParams.get('garden');
-    ownerName = u.searchParams.get('owner') || 'their';
-  }
-  readGarden(gardenId, ownerName);
-}
-
-function readGarden(gardenId, ownerName) {
-  const data = loadState(gardenId);
-  document.getElementById('read-owner-name').textContent = decodeURIComponent(ownerName) + "'s garden";
-  renderScene(data.entries || [], 'read-scene', 'read-detail');
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-read').classList.add('active');
-  const list = document.getElementById('read-entries-list');
-  if (!data.entries || !data.entries.length) {
-    list.innerHTML = '<div class="empty-garden">No sunflowers here yet...<br>Maybe check back tomorrow 🌱</div>';
-  } else {
-    list.innerHTML = data.entries.map(e => `
-      <div class="entry-card">
-        <div class="entry-card-date">${formatDate(e.date)}</div>
-        <div class="entry-card-q">${e.question}</div>
-        <div class="entry-card-a">${e.answer}</div>
-      </div>`).join('');
-  }
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-read').classList.add('active');
   window.scrollTo(0,0);
 }
 
@@ -902,13 +972,6 @@ function showToast(msg) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  const garden = params.get('garden');
-  const owner = params.get('owner');
-  if (garden) {
-    readGarden(garden, owner || 'their');
-    return;
-  }
   const savedUid = localStorage.getItem('rose_uid');
   const savedName = localStorage.getItem('rose_uname');
   if (savedUid && savedName) {
@@ -916,6 +979,8 @@ window.addEventListener('DOMContentLoaded', () => {
     state.userId = savedUid;
     state.entries = loadState(savedUid).entries || [];
     showHome();
+  } else {
+    loadShowcase();
   }
 });
 </script>
