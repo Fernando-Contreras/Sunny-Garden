@@ -740,7 +740,7 @@ function renderScene(entries, sceneId, detailId, extra) {
   s += `<g class="bfly"><g class="flap"><path d="M0 0 C-5 -9 -13 -8 -11 -1 C-13 6 -5 7 0 1Z" fill="#8fb8ff" stroke="${INK}" stroke-width="1"/><path d="M0 0 C5 -9 13 -8 11 -1 C13 6 5 7 0 1Z" fill="#b39cff" stroke="${INK}" stroke-width="1"/></g><path d="M0 -4 L0 5" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/></g>`;
 
   // Paper frame, vignette, grain
-  s += `<rect width="${W}" height="${H}" fill="url(#${p}vig)"/>`;
+  s += `<rect width="${W}" height="${H}" fill="url(#${p}vig)" pointer-events="none"/>`;
   s += `<rect width="${W}" height="${H}" filter="url(#${p}grain)" style="mix-blend-mode:multiply" pointer-events="none"/>`;
   s += `<rect x="6" y="6" width="${W - 12}" height="${H - 12}" rx="12" fill="none" stroke="#fff3dc" stroke-opacity="0.7" stroke-width="1.2" pointer-events="none"/>`;
   s += `</svg>`;
