@@ -766,8 +766,9 @@ function renderScene(entries, sceneId, detailId, extra) {
   });
 }
 
-const SB_URL = 'https://qupukwwpebnawbtdbibs.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cHVrd3dwZWJuYXdidGRiaWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDQ0MDgsImV4cCI6MjA5NjcyMDQwOH0.IuQgej-fGMIDVuXOR0jjH_YgrTJJtRZKsKRPfZScCZY';
+const SB_URL = 'https://hikcmyhviwutxfvnkzkq.supabase.co';
+// Publishable key: meant to be public. The table has no policies, so only the functions in supabase/sunny_shared.sql are reachable.
+const SB_KEY = 'sb_publishable_01-6kugTz_r7RkWTV3y4Aw_EztuPHrs';
 
 // Per-device secret that proves "this is my sunflower" when unsharing. The server only keeps its hash.
 function getShareKey() {
@@ -782,7 +783,7 @@ function getShareKey() {
 async function rpc(fn, args) {
   const r = await fetch(SB_URL + '/rest/v1/rpc/' + fn, {
     method: 'POST',
-    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+    headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify(args),
   });
   if (!r.ok) throw new Error(fn + ' failed: ' + r.status);
