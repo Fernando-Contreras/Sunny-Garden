@@ -577,39 +577,56 @@ function showHome() {
   document.getElementById('q-date').textContent = dateStr;
   const qIndex = Math.abs(hashDay(today)) % QUESTIONS.length;
   document.getElementById('q-text').textContent = QUESTIONS[qIndex];
-  const todayKey = today.toISOString().slice(0,10);
+  const todayKey = localDateKey(today);
   const alreadyAnswered = state.entries.find(e => e.date === todayKey);
+  const submitBtn = document.getElementById('submit-btn');
   if (alreadyAnswered) {
     document.getElementById('answer-input').value = alreadyAnswered.answer;
-    document.getElementById('submit-btn').textContent = '✓ Sunflower left today';
-    document.getElementById('submit-btn').disabled = true;
-    document.getElementById('submit-btn').style.background = 'var(--stem)';
+    submitBtn.textContent = '✓ Sunflower left today';
+    submitBtn.style.background = 'var(--stem)';
+  } else {
+    document.getElementById('answer-input').value = '';
+    submitBtn.textContent = 'Leave this sunflower 🌻';
+    submitBtn.style.background = '';
   }
 
   askNotifPermission();
   showScreen('s-home', document.querySelector('.nav-item'));
 }
 
+// Local calendar day (not UTC), so "today" flips at the user's midnight.
+function localDateKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 function hashDay(date) {
-  const s = date.toISOString().slice(0,10);
+  const s = localDateKey(date);
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return h;
 }
 
-function submitAnswer() {
+async function submitAnswer() {
   const answer = document.getElementById('answer-input').value.trim();
   if (!answer) { showToast('Write something first...'); return; }
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateKey(new Date());
+  const existing = state.entries.find(e => e.date === today);
+  if (existing && existing.answer === answer) { showToast('Already up to date 🌻'); return; }
   const q = document.getElementById('q-text').textContent;
-  const entry = { date: today, question: q, answer };
+  const entry = existing ? { ...existing, answer } : { date: today, question: q, answer };
   state.entries = state.entries.filter(e => e.date !== today);
   state.entries.unshift(entry);
   saveState(state.userId, { entries: state.entries });
   document.getElementById('submit-btn').textContent = '✓ Sunflower left today';
-  document.getElementById('submit-btn').disabled = true;
   document.getElementById('submit-btn').style.background = 'var(--stem)';
-  showToast('Your sunflower is planted 🌻');
+  if (!existing) { showToast('Your sunflower is planted 🌻'); return; }
+  if (!entry.shared) { showToast('Sunflower updated 🌻'); return; }
+  try {
+    await rpc('share_entry', { p_key: getShareKey(), p_date: entry.date, p_question: entry.question, p_answer: entry.answer });
+    showToast('Updated, and the shared copy too 🌻');
+  } catch (err) {
+    showToast("Saved here, but couldn't update the shared copy");
+  }
 }
 
 const INK = '#3a1a2a';
@@ -821,6 +838,89 @@ function shareControls(e, detail, g) {
   };
   paint();
   detail.appendChild(btn);
+
+  const cut = document.createElement('button');
+  cut.className = 'report-btn';
+  cut.textContent = 'Cut this sunflower ✂️';
+  cut.onclick = () => cutFlower(e, g, cut);
+  detail.appendChild(cut);
+}
+
+const HAND_SVG = `<g class="cut-hand" pointer-events="none">
+  <g transform="translate(0 -22)" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="-4.5" y="-340" width="9" height="328" rx="4.5" fill="#fff"/>
+    <rect x="-10" y="-16" width="20" height="9" rx="2" fill="#d94a5f"/>
+    <ellipse cx="0" cy="0" rx="11" ry="8.5" fill="#fff"/>
+    <rect x="-10.5" y="3" width="5" height="15" rx="2.5" fill="#fff"/>
+    <rect x="-5" y="5" width="5" height="17" rx="2.5" fill="#fff"/>
+    <rect x="0" y="5" width="5" height="17" rx="2.5" fill="#fff"/>
+    <rect x="5.5" y="3" width="5" height="14" rx="2.5" fill="#fff"/>
+    <path d="M-10 -2 C-17 0 -17 9 -11 9" fill="#fff"/>
+  </g>
+</g>`;
+
+const DIRT_SVG = `<g class="cut-dirt" pointer-events="none" opacity="0" fill="#6b4a2b" stroke="${INK}" stroke-width="0.8">
+  <circle cx="-9" cy="-1" r="2.6"/><circle cx="9" cy="-2" r="2.2"/><circle cx="-3" cy="-5" r="2"/><circle cx="4" cy="-6" r="2.4"/><circle cx="0" cy="0" r="1.8"/>
+</g>`;
+
+// A cartoon glove grabs the stem, yanks the sunflower out of the ground and carries it off the top.
+async function playCutAnimation(g) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const sway = g.querySelector('.flower-sway');
+  sway.style.animation = 'none';
+  g.insertAdjacentHTML('beforeend', '<ellipse class="cut-hole" cx="0" cy="1" rx="11" ry="3" fill="#2b1d14" opacity="0"/>' + DIRT_SVG + HAND_SVG);
+  const hand = g.querySelector('.cut-hand'), dirt = g.querySelector('.cut-dirt'), hole = g.querySelector('.cut-hole');
+  const D = 2300;
+  const anims = [
+    hand.animate([
+      { transform: 'translateY(-130px)', offset: 0, easing: 'ease-out' },
+      { transform: 'translateY(0)', offset: 0.28 },
+      { transform: 'translateY(2px) scale(0.93)', offset: 0.36 },
+      { transform: 'translateY(0)', offset: 0.44, easing: 'ease-in' },
+      { transform: 'translateY(-380px)', offset: 1 },
+    ], { duration: D, fill: 'forwards' }),
+    sway.animate([
+      { transform: 'none', offset: 0 },
+      { transform: 'none', offset: 0.44, easing: 'ease-in' },
+      { transform: 'translateY(-380px) rotate(9deg)', offset: 1 },
+    ], { duration: D, fill: 'forwards' }),
+    dirt.animate([
+      { opacity: 0, transform: 'translateY(0) scale(0.6)', offset: 0 },
+      { opacity: 0, transform: 'translateY(0) scale(0.6)', offset: 0.44 },
+      { opacity: 1, transform: 'translateY(-6px) scale(1)', offset: 0.5 },
+      { opacity: 0, transform: 'translateY(-20px) scale(1.5)', offset: 0.8 },
+    ], { duration: D, fill: 'forwards' }),
+    hole.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: 0.44 }, { opacity: 0.9, offset: 0.5 }], { duration: D, fill: 'forwards' }),
+  ];
+  await Promise.all(anims.map(a => a.finished));
+  await new Promise(r => setTimeout(r, 350));
+}
+
+async function cutFlower(e, g, btn) {
+  const warn = e.shared ? ' It will also stop being shared.' : '';
+  if (!confirm('Cut this sunflower? It will be gone from your garden for good.' + warn)) return;
+  btn.disabled = true;
+  if (e.shared) {
+    try {
+      await rpc('unshare_entry', { p_key: getShareKey(), p_date: e.date });
+    } catch (err) {
+      btn.disabled = false;
+      showToast("Couldn't reach the garden. Try again in a moment");
+      return;
+    }
+  }
+  document.getElementById('garden-detail').classList.remove('show');
+  await playCutAnimation(g);
+  state.entries = state.entries.filter(x => x !== e);
+  saveState(state.userId, { entries: state.entries });
+  if (e.date === localDateKey(new Date())) {
+    document.getElementById('answer-input').value = '';
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.textContent = 'Leave this sunflower 🌻';
+    submitBtn.style.background = '';
+  }
+  showGarden();
+  showToast('Cut. Gone for good 🌱');
 }
 
 function reportControl(e, detail, g) {
