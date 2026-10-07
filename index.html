@@ -630,13 +630,6 @@ async function submitAnswer() {
 }
 
 const INK = '#3a1a2a';
-const FLOWER_COLORS = [
-  ['#ffd23f', '#f2a516', '#6b3b1c'],
-  ['#ffe680', '#f6c445', '#7a4a24'],
-  ['#ffb22e', '#e5801a', '#5a2f14'],
-  ['#fff0a0', '#f7d25a', '#8a5a2a'],
-];
-
 function sceneRand(n) {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
@@ -667,26 +660,46 @@ function flowerDef(p) {
   </g>`;
 }
 
+// Each garden has its own look: sky palette, sun, clouds, hills, flower hues and positions all come from a seed
+// (the owner's id for your own garden, the lowest sunflower id for someone else's), so a garden always looks the same.
+const SCENE_PALETTES = [
+  { sky: ['#a99bd8', '#f3b9cb', '#fde6c4'], glow: ['#fff6d6', '#fdd9b0'], far: ['#b9a9dc', '#e9c9dc'], mid: ['#b8d9a8', '#7fb686'], meadow: ['#a9d48f', '#63a06c', '#3d7853'], cloud: '#f6c6d4' },
+  { sky: ['#8ec5e8', '#fbd9a6', '#ffeccc'], glow: ['#fff3c4', '#ffd98a'], far: ['#a8c8e8', '#e3d6c4'], mid: ['#c2dd9a', '#86b872'], meadow: ['#b5d98a', '#6fa862', '#427a4b'], cloud: '#fbd3a8' },
+  { sky: ['#6fb4e6', '#b7dcf2', '#f3f1d9'], glow: ['#ffffe6', '#fff0b8'], far: ['#9bc3e0', '#d6e6ea'], mid: ['#b4dc9c', '#78b27a'], meadow: ['#a4d684', '#5fa35f', '#3a7449'], cloud: '#cfe6f5' },
+  { sky: ['#6a5aa8', '#d9779a', '#ffc58a'], glow: ['#ffe2b0', '#ffb27a'], far: ['#7d6bb0', '#c98fb3'], mid: ['#8fb98d', '#5f9170'], meadow: ['#86bb78', '#4f8d62', '#32644a'], cloud: '#e9a3b8' },
+  { sky: ['#c3d6e8', '#e8dbe4', '#fff2dc'], glow: ['#fffbe8', '#f6e3c2'], far: ['#c3cfe6', '#e6dde6'], mid: ['#c8e0b4', '#93bf8f'], meadow: ['#b9dd9a', '#74ad75', '#4a815a'], cloud: '#ecd9e2' },
+];
+
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 // extra(e, detail, flowerEl), if given, adds controls under the text of an opened sunflower.
-function renderScene(entries, sceneId, detailId, extra) {
+function renderScene(entries, sceneId, detailId, extra, seed) {
   const scene = document.getElementById(sceneId);
   const detail = document.getElementById(detailId);
   detail.classList.remove('show');
   const p = sceneId + '-';
+  const R = n => sceneRand(n + (seed || 0) % 100003 * 0.618);
   const oldest = entries.slice().reverse();
-  const perRow = 5;
-  const rows = Math.max(1, Math.ceil(oldest.length / perRow));
+  const rows = Math.max(1, Math.ceil(oldest.length / 5));
   const W = 340;
   const H = Math.max(300, 200 + rows * 70);
   const hz = Math.round(H * 0.38);
+  const pal = SCENE_PALETTES[Math.floor(R(1) * SCENE_PALETTES.length)];
+  // Most gardens are golden-yellow; now and then one is a deep orange "autumn" garden.
+  const gardenHue = R(2) < 0.2 ? 18 + R(3) * 10 : 36 + R(3) * 16;
+  const o = (n, amp) => ((R(n) - 0.5) * amp).toFixed(1);
 
   let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A garden of sunflowers">`;
   s += `<defs>
-    <linearGradient id="${p}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a99bd8"/><stop offset="0.45" stop-color="#f3b9cb"/><stop offset="1" stop-color="#fde6c4"/></linearGradient>
-    <radialGradient id="${p}sunglow"><stop offset="0" stop-color="#fff6d6" stop-opacity="0.95"/><stop offset="0.35" stop-color="#fdd9b0" stop-opacity="0.45"/><stop offset="1" stop-color="#fdd9b0" stop-opacity="0"/></radialGradient>
-    <linearGradient id="${p}far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9a9dc"/><stop offset="1" stop-color="#e9c9dc"/></linearGradient>
-    <linearGradient id="${p}mid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8d9a8"/><stop offset="1" stop-color="#7fb686"/></linearGradient>
-    <linearGradient id="${p}meadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d48f"/><stop offset="0.5" stop-color="#63a06c"/><stop offset="1" stop-color="#3d7853"/></linearGradient>
+    <linearGradient id="${p}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${pal.sky[0]}"/><stop offset="0.45" stop-color="${pal.sky[1]}"/><stop offset="1" stop-color="${pal.sky[2]}"/></linearGradient>
+    <radialGradient id="${p}sunglow"><stop offset="0" stop-color="${pal.glow[0]}" stop-opacity="0.95"/><stop offset="0.35" stop-color="${pal.glow[1]}" stop-opacity="0.45"/><stop offset="1" stop-color="${pal.glow[1]}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="${p}far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${pal.far[0]}"/><stop offset="1" stop-color="${pal.far[1]}"/></linearGradient>
+    <linearGradient id="${p}mid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${pal.mid[0]}"/><stop offset="1" stop-color="${pal.mid[1]}"/></linearGradient>
+    <linearGradient id="${p}meadow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${pal.meadow[0]}"/><stop offset="0.5" stop-color="${pal.meadow[1]}"/><stop offset="1" stop-color="${pal.meadow[2]}"/></linearGradient>
     <linearGradient id="${p}mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <radialGradient id="${p}glow"><stop offset="0" stop-color="#fff2b0" stop-opacity="0.95"/><stop offset="1" stop-color="#ffe27a" stop-opacity="0"/></radialGradient>
     <radialGradient id="${p}vig" cx="0.5" cy="0.5" r="0.75"><stop offset="0.6" stop-color="#4a1f3c" stop-opacity="0"/><stop offset="1" stop-color="#4a1f3c" stop-opacity="0.4"/></radialGradient>
@@ -695,61 +708,84 @@ function renderScene(entries, sceneId, detailId, extra) {
   </defs>`;
 
   // Sky, sun, rays
-  const sx = 250, sy = hz - 62;
+  const sx = 60 + R(10) * 220, sy = Math.max(40, hz - 44 - R(11) * 40);
   s += `<rect width="${W}" height="${H}" fill="url(#${p}sky)"/>`;
-  s += `<circle cx="${sx}" cy="${sy}" r="120" fill="url(#${p}sunglow)"/>`;
-  s += `<g class="sun-rays" style="transform-origin:${sx}px ${sy}px" fill="#fff3c8" opacity="0.35">`;
-  for (let i = 0; i < 12; i++) s += `<polygon points="-3,-32 3,-32 0,-78" transform="translate(${sx} ${sy}) rotate(${i * 30})"/>`;
-  s += `</g><circle cx="${sx}" cy="${sy}" r="19" fill="#fff8dd"/>`;
+  s += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="120" fill="url(#${p}sunglow)"/>`;
+  s += `<g class="sun-rays" style="transform-origin:${sx.toFixed(1)}px ${sy.toFixed(1)}px" fill="#fff3c8" opacity="0.35">`;
+  for (let i = 0; i < 12; i++) s += `<polygon points="-3,-32 3,-32 0,-78" transform="translate(${sx.toFixed(1)} ${sy.toFixed(1)}) rotate(${i * 30})"/>`;
+  s += `</g><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="19" fill="#fff8dd"/>`;
 
   // Clouds
-  const cloud = (x, y, sc, d) => `<g transform="translate(${x} ${y}) scale(${sc})"><g class="cloud" style="animation-delay:-${d}s">
-    <ellipse cx="0" cy="4" rx="30" ry="8" fill="#f6c6d4" opacity="0.8"/>
+  const cloud = (x, y, sc, d) => `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><g class="cloud" style="animation-delay:-${d.toFixed(1)}s">
+    <ellipse cx="0" cy="4" rx="30" ry="8" fill="${pal.cloud}" opacity="0.8"/>
     <g fill="#fff7ee" opacity="0.95"><ellipse cx="0" cy="0" rx="28" ry="9"/><ellipse cx="-14" cy="-6" rx="14" ry="10"/><ellipse cx="6" cy="-10" rx="16" ry="12"/><ellipse cx="20" cy="-4" rx="12" ry="8"/></g></g></g>`;
-  s += cloud(70, hz * 0.32, 1.1, 3) + cloud(165, hz * 0.55, 0.8, 9) + cloud(300, hz * 0.22, 0.7, 6);
+  const nClouds = 2 + Math.floor(R(19) * 3);
+  for (let j = 0; j < nClouds; j++) s += cloud(30 + R(20 + j) * 280, hz * (0.15 + R(30 + j) * 0.5), 0.7 + R(40 + j) * 0.5, R(50 + j) * 12);
 
   // Sparkles
   const star = 'M0 -4 C0.6 -1 1 -0.6 4 0 C1 0.6 0.6 1 0 4 C-0.6 1 -1 0.6 -4 0 C-1 -0.6 -0.6 -1 0 -4Z';
   for (let i = 0; i < 18; i++) {
-    const x = sceneRand(i + 1) * W, y = sceneRand(i + 50) * (H * 0.92), sc = 0.7 + sceneRand(i + 90) * 0.9;
-    s += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><path class="twinkle" d="${star}" fill="#fff6c9" style="animation-delay:-${(sceneRand(i + 7) * 3.4).toFixed(2)}s;animation-duration:${(2.6 + sceneRand(i + 11) * 2).toFixed(1)}s"/></g>`;
+    const x = R(i + 100) * W, y = R(i + 150) * (H * 0.92), sc = 0.7 + R(i + 190) * 0.9;
+    s += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><path class="twinkle" d="${star}" fill="#fff6c9" style="animation-delay:-${(R(i + 107) * 3.4).toFixed(2)}s;animation-duration:${(2.6 + R(i + 111) * 2).toFixed(1)}s"/></g>`;
   }
 
   // Hills, mist, meadow
-  s += `<path d="M0 ${hz + 6} C60 ${hz - 26} 110 ${hz - 12} 170 ${hz - 20} C230 ${hz - 28} 290 ${hz - 6} ${W} ${hz - 14} L${W} ${hz + 40} L0 ${hz + 40}Z" fill="url(#${p}far)"/>`;
-  s += `<path d="M0 ${hz + 14} C50 ${hz - 8} 120 ${hz + 2} 190 ${hz - 6} C250 ${hz - 12} 300 ${hz + 8} ${W} ${hz + 2} L${W} ${H} L0 ${H}Z" fill="url(#${p}mid)"/>`;
-  for (let i = 0; i < 8; i++) {
-    const x = 18 + i * 44 + sceneRand(i + 200) * 14, y = hz + 2 + sceneRand(i + 210) * 10, r = 7 + sceneRand(i + 220) * 5;
-    s += `<g fill="#79ab83" opacity="0.8"><rect x="${(x - 1).toFixed(1)}" y="${y.toFixed(1)}" width="2" height="7"/><ellipse cx="${x.toFixed(1)}" cy="${(y - 2).toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * 1.1).toFixed(1)}"/></g>`;
+  s += `<path d="M0 ${hz + 6 + +o(60, 16)} C60 ${hz - 26 + +o(61, 18)} 110 ${hz - 12 + +o(62, 18)} 170 ${hz - 20 + +o(63, 18)} C230 ${hz - 28 + +o(64, 18)} 290 ${hz - 6 + +o(65, 18)} ${W} ${hz - 14 + +o(66, 16)} L${W} ${hz + 40} L0 ${hz + 40}Z" fill="url(#${p}far)"/>`;
+  s += `<path d="M0 ${hz + 14 + +o(70, 10)} C50 ${hz - 8 + +o(71, 14)} 120 ${hz + 2 + +o(72, 14)} 190 ${hz - 6 + +o(73, 14)} C250 ${hz - 12 + +o(74, 14)} 300 ${hz + 8 + +o(75, 14)} ${W} ${hz + 2 + +o(76, 10)} L${W} ${H} L0 ${H}Z" fill="url(#${p}mid)"/>`;
+  const nTrees = 5 + Math.floor(R(80) * 5);
+  for (let i = 0; i < nTrees; i++) {
+    const x = 14 + R(i + 200) * (W - 28), y = hz + 2 + R(i + 210) * 10, r = 7 + R(i + 220) * 6;
+    s += `<g fill="${pal.mid[1]}" opacity="0.8"><rect x="${(x - 1).toFixed(1)}" y="${y.toFixed(1)}" width="2" height="7"/><ellipse cx="${x.toFixed(1)}" cy="${(y - 2).toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * 1.1).toFixed(1)}"/></g>`;
   }
   s += `<rect x="0" y="${hz - 12}" width="${W}" height="44" fill="url(#${p}mist)"/>`;
-  s += `<path d="M0 ${hz + 28} C70 ${hz + 14} 140 ${hz + 30} 210 ${hz + 20} C270 ${hz + 12} 310 ${hz + 24} ${W} ${hz + 18} L${W} ${H} L0 ${H}Z" fill="url(#${p}meadow)"/>`;
-  s += `<g fill="#d3ecaa" opacity="0.3"><ellipse cx="70" cy="${hz + 60}" rx="60" ry="9"/><ellipse cx="250" cy="${hz + 90}" rx="70" ry="10"/><ellipse cx="150" cy="${H - 50}" rx="80" ry="10"/></g>`;
+  s += `<path d="M0 ${hz + 28 + +o(90, 8)} C70 ${hz + 14 + +o(91, 10)} 140 ${hz + 30 + +o(92, 10)} 210 ${hz + 20 + +o(93, 10)} C270 ${hz + 12 + +o(94, 10)} 310 ${hz + 24 + +o(95, 10)} ${W} ${hz + 18 + +o(96, 8)} L${W} ${H} L0 ${H}Z" fill="url(#${p}meadow)"/>`;
+  s += `<g fill="#d3ecaa" opacity="0.3"><ellipse cx="${(40 + R(97) * 80).toFixed(0)}" cy="${hz + 60}" rx="60" ry="9"/><ellipse cx="${(200 + R(98) * 100).toFixed(0)}" cy="${hz + 90}" rx="70" ry="10"/><ellipse cx="${(100 + R(99) * 140).toFixed(0)}" cy="${H - 50}" rx="80" ry="10"/></g>`;
 
   // Foreground items, drawn back-to-front
   const items = [];
   const meadowTop = hz + 40;
   for (let i = 0; i < 24; i++) {
-    const x = sceneRand(i + 300) * W, y = meadowTop + sceneRand(i + 330) * (H - meadowTop - 4);
+    const x = R(i + 300) * W, y = meadowTop + R(i + 330) * (H - meadowTop - 4);
     const sc = 0.6 + 0.7 * ((y - hz) / (H - hz));
     items.push({ y, svg: `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})" fill="#3f8a55" stroke="${INK}" stroke-width="1" stroke-linejoin="round"><path d="M-6 0 C-7 -8 -5 -14 -8 -20 C-2 -14 -2 -7 0 0Z"/><path d="M-1 0 C-2 -12 0 -20 2 -26 C4 -19 3 -10 4 0Z"/><path d="M3 0 C5 -8 8 -13 12 -17 C9 -10 8 -5 8 0Z"/></g>` });
   }
-  for (let i = 0; i < 7; i++) {
-    const x = 14 + sceneRand(i + 400) * (W - 28), y = meadowTop + 14 + sceneRand(i + 430) * (H - meadowTop - 30);
+  const nDaisies = 4 + Math.floor(R(399) * 6);
+  for (let i = 0; i < nDaisies; i++) {
+    const x = 14 + R(i + 400) * (W - 28), y = meadowTop + 14 + R(i + 430) * (H - meadowTop - 30);
     const sc = 0.7 + 0.6 * ((y - hz) / (H - hz));
+    const petalFill = R(i + 460) < 0.7 ? '#fffaf0' : (R(i + 470) < 0.5 ? '#ffd6e0' : '#e4d6ff');
     let petals = '';
     for (let k = 0; k < 6; k++) petals += `<ellipse cx="0" cy="-4" rx="2" ry="3.6" transform="rotate(${k * 60})"/>`;
-    items.push({ y, svg: `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><path d="M0 0 C1 -6 -1 -10 0 -14" fill="none" stroke="#2f6a45" stroke-width="1.3"/><g transform="translate(0 -14)" fill="#fffaf0" stroke="${INK}" stroke-width="0.8">${petals}<circle r="2.2" fill="#f6c344"/></g></g>` });
+    items.push({ y, svg: `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><path d="M0 0 C1 -6 -1 -10 0 -14" fill="none" stroke="#2f6a45" stroke-width="1.3"/><g transform="translate(0 -14)" fill="${petalFill}" stroke="${INK}" stroke-width="0.8">${petals}<circle r="2.2" fill="#f6c344"/></g></g>` });
   }
-  const top = hz + 74, bottom = H - 34;
+
+  // Sunflowers: random spots in the meadow (never up in the sky), kept apart from each other.
+  const top = hz + 78, bottom = H - 34;
+  const placed = [];
   oldest.forEach((e, i) => {
-    const row = Math.floor(i / perRow), col = i % perRow;
-    const frac = rows > 1 ? row / (rows - 1) : 0.5;
-    const x = 40 + col * (260 / (perRow - 1)) + (row % 2 ? 16 : 0) + (sceneRand(i + 500) * 14 - 7);
-    const y = top + frac * (bottom - top) + (sceneRand(i + 530) * 8 - 4);
-    const sc = 0.8 + 0.35 * frac;
-    const c = FLOWER_COLORS[i % FLOWER_COLORS.length];
-    items.push({ y, svg: `<g class="flower${e.shared ? ' shared' : ''}" data-i="${i}" tabindex="0" role="button" aria-label="Sunflower from ${formatDate(e.date)}" transform="translate(${Math.min(x, W - 24).toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(2)})"><g class="flower-sway" style="animation-delay:-${((i % 5) * 0.9).toFixed(1)}s"><g class="flower-pop"><ellipse cx="0" cy="1" rx="12" ry="3" fill="#2b4a36" opacity="0.35"/><circle class="flower-glow" cx="0" cy="-52" r="34" fill="url(#${p}glow)"/><use href="#${p}flower" style="--p1:${c[0]};--p2:${c[1]};--p3:${c[2]}"/><circle cx="0" cy="-52" r="28" fill="transparent"/></g></g></g>` });
+    // Everything about a sunflower comes from its own id (or date), so cutting another one never moves it.
+    const ek = e.id != null ? e.id : hashStr(e.date);
+    const E = n => R(n + ek * 37);
+    let t = 0;
+    const draw = () => E(1000 + t++);
+    let spot = null, minD = 48;
+    for (let tries = 0; tries < 60 && !spot; tries++) {
+      const x = 28 + draw() * (W - 56), y = top + draw() * (bottom - top);
+      if (placed.every(q => Math.hypot(q.x - x, (q.y - y) * 1.4) >= minD)) spot = { x, y };
+      else if (tries % 12 === 11) minD -= 7;
+    }
+    if (!spot) spot = { x: 28 + draw() * (W - 56), y: top + draw() * (bottom - top) };
+    placed.push(spot);
+    const frac = (spot.y - top) / (bottom - top);
+    const sc = (0.8 + 0.35 * frac) * (0.92 + E(2100) * 0.16);
+    const sy2 = sc * (0.92 + E(2200) * 0.2);
+    const flip = E(2300) < 0.5 ? -1 : 1;
+    const tilt = (E(2400) - 0.5) * 8;
+    const hue = gardenHue + (E(2500) - 0.5) * 12;
+    const front = `hsl(${hue.toFixed(0)} 100% ${(58 + E(2600) * 10).toFixed(0)}%)`;
+    const back = `hsl(${(hue - 6).toFixed(0)} 95% ${(46 + E(2700) * 8).toFixed(0)}%)`;
+    const center = `hsl(${(20 + E(2800) * 16).toFixed(0)} 55% ${(18 + E(2900) * 10).toFixed(0)}%)`;
+    items.push({ y: spot.y, svg: `<g class="flower${e.shared ? ' shared' : ''}" data-i="${i}" tabindex="0" role="button" aria-label="Sunflower from ${formatDate(e.date)}" transform="translate(${spot.x.toFixed(1)} ${spot.y.toFixed(1)}) rotate(${tilt.toFixed(1)}) scale(${(flip * sc).toFixed(3)} ${sy2.toFixed(3)})"><g class="flower-sway" style="animation-delay:-${((i % 5) * 0.9).toFixed(1)}s"><g class="flower-pop"><ellipse cx="0" cy="1" rx="12" ry="3" fill="#2b4a36" opacity="0.35"/><circle class="flower-glow" cx="0" cy="-52" r="34" fill="url(#${p}glow)"/><use href="#${p}flower" style="--p1:${front};--p2:${back};--p3:${center}"/><circle cx="0" cy="-52" r="28" fill="transparent"/></g></g></g>` });
   });
   items.sort((a, b) => a.y - b.y).forEach(it => { s += it.svg; });
 
@@ -975,6 +1011,11 @@ async function unshareAll() {
 let seenIds = [];
 let lastGardenIds = [];
 
+// Someone else's garden is seeded by its lowest sunflower id, which never changes.
+function gardenSeed(entries) {
+  return Math.min(...entries.map(e => e.id));
+}
+
 async function fetchRandomGarden() {
   const call = seen => rpc('random_garden', { p_key: localStorage.getItem('rose_share_key'), p_seen: seen });
   let rows = await call(seenIds);
@@ -1000,7 +1041,7 @@ async function loadShowcase() {
       else box.hidden = true;
       return;
     }
-    renderScene(entries, 'showcase-scene', 'showcase-detail', reportControl);
+    renderScene(entries, 'showcase-scene', 'showcase-detail', reportControl, gardenSeed(entries));
     box.hidden = false;
   } catch (err) {
     if (!lastGardenIds.length) box.hidden = true;
@@ -1014,7 +1055,7 @@ async function showRandomGarden() {
       showToast(lastGardenIds.length ? "That's the only other garden for now 🌻" : 'No other gardens are shared yet 🌻');
       return;
     }
-    renderScene(entries, 'read-scene', 'read-detail', reportControl);
+    renderScene(entries, 'read-scene', 'read-detail', reportControl, gardenSeed(entries));
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('s-read').classList.add('active');
     window.scrollTo(0, 0);
@@ -1024,7 +1065,7 @@ async function showRandomGarden() {
 }
 
 function showGarden() {
-  renderScene(state.entries, 'garden-scene', 'garden-detail', shareControls);
+  renderScene(state.entries, 'garden-scene', 'garden-detail', shareControls, hashStr(state.userId || ''));
   updateShareTools();
   const list = document.getElementById('entries-list');
   if (!state.entries.length) {
