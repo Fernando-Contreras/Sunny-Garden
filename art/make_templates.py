@@ -37,6 +37,7 @@ PIECES = {
     "hills-far": (1360, 300, "Far hills"),
     "hills-near": (1360, 300, "Closer hills"),
     "meadow": (1360, 1900, "Meadow / grass"),
+    "scene": (1360, 2500, "Whole painting"),
 }
 
 
@@ -93,6 +94,14 @@ def draw_guides(d, key, x, y, w, h, s):
         d.text((x + 24 * s, y + h - 20 * s), "BOTTOM: can be darker", font=F_S if s > 0.8 else None, fill=GUIDE, anchor="ld")
         for frac in (0.25, 0.5, 0.75):
             dashed_line(d, (x, y + h * frac), (x + 40 * s, y + h * frac), GUIDE, max(2, int(s)), 12 * s, 8 * s)
+    elif key == "scene":
+        hz = 450 * s / s  # guide lines are drawn in template pixels scaled by s
+        dashed_line(d, (x, y + 450 * s), (x + w, y + 450 * s), GUIDE, max(2, int(s * 1.5)), 30 * s, 18 * s)
+        d.text((x + 24 * s, y + 24 * s), "SKY, SUN, CLOUDS: wherever you like", font=F_S if s > 0.5 else None, fill=GUIDE, anchor="la")
+        d.text((x + 24 * s, y + 450 * s - 24 * s), "HILLS: the hilltops sit around this line", font=F_S if s > 0.5 else None, fill=GUIDE, anchor="ld")
+        d.rectangle((x + 80 * s, y + 650 * s, x + w - 80 * s, y + 2300 * s), outline=GUIDE, width=max(2, int(s * 1.5)))
+        d.text((x + w / 2, y + 1475 * s), "MEADOW: keep this area\ncalm and EMPTY of sunflowers\n(the app plants them here)", font=F_T if s > 0.5 else None, fill=GUIDE, anchor="mm", align="center")
+        d.text((x + w / 2, y + h - 24 * s), "bottom edge can be darker. Small flowers, grass and daisies are welcome anywhere.", font=F_S if s > 0.5 else None, fill=GUIDE, anchor="md")
     elif key == "sky":
         d.text((x + 24 * s, y + h - 20 * s), "the sun, clouds and hills are placed on top of this", font=F_S if s > 0.8 else None, fill=GUIDE, anchor="ld")
     else:
@@ -138,7 +147,7 @@ def box(d, key, x, y, f, label, note=None):
 FOOT = "Light blue lines are only a guide: paint inside them, any size you like as long as the shape (proportion) stays the same."
 
 # page 1: sunflowers
-img, d = new_page("Page 1 / 5 - The sunflower (the most important one!)", "Four colour versions: golden, pale yellow, orange, deep red-orange. Box is 300 x 480 px (5:8).")
+img, d = new_page("Page 1 / 6 - The sunflower (the most important one!)", "Four colour versions: golden, pale yellow, orange, deep red-orange. Box is 300 x 480 px (5:8).")
 f = 2.5
 names = ["1. Golden", "2. Pale yellow", "3. Orange", "4. Deep red-orange"]
 xs = [(PAGE_W - 2 * 750) // 3, (PAGE_W - 2 * 750) // 3 * 2 + 750]
@@ -150,7 +159,7 @@ d.text((140, PAGE_H - 90), FOOT, font=F_S, fill=SOFT)
 pages.append(img)
 
 # page 2: sun + clouds
-img, d = new_page("Page 2 / 5 - Sun and clouds", "Sun: 700 x 700 px (square). Clouds: 300 x 110 px (about 11:4). Soft edges are great: they get placed on the sky.")
+img, d = new_page("Page 2 / 6 - Sun and clouds", "Sun: 700 x 700 px (square). Clouds: 300 x 110 px (about 11:4). Soft edges are great: they get placed on the sky.")
 box(d, "sun", (PAGE_W - 1750) // 2, 440, 2.5, "Sun with its glow", "1:1")
 cw = int(300 * 2.5)
 gap = (PAGE_W - 3 * cw) // 4
@@ -160,7 +169,7 @@ d.text((140, PAGE_H - 90), FOOT, font=F_S, fill=SOFT)
 pages.append(img)
 
 # page 3: small things
-img, d = new_page("Page 3 / 5 - The little ones", "Shown 6x bigger than they appear in the app, so there's room for detail. Wings are the key: draw two poses of each.")
+img, d = new_page("Page 3 / 6 - The little ones", "Shown 6x bigger than they appear in the app, so there's room for detail. Wings are the key: draw two poses of each.")
 f = 6
 bw = int(100 * f)
 box(d, "butterfly", 300, 480, f, "Butterfly - wings OPEN", "5:4")
@@ -174,7 +183,7 @@ d.text((140, PAGE_H - 90), FOOT, font=F_S, fill=SOFT)
 pages.append(img)
 
 # page 4: sky + hills
-img, d = new_page("Page 4 / 5 - Sky and hills", "All three are the full width of the garden. Sky 1360 x 600 px, each hills strip 1360 x 300 px.")
+img, d = new_page("Page 4 / 6 - Sky and hills", "All three are the full width of the garden. Sky 1360 x 600 px, each hills strip 1360 x 300 px.")
 f = 1.5
 box(d, "sky", 255, 460, f, "Sky", "1360:600")
 box(d, "hills-far", 255, 460 + 900 + 130, f, "Far hills (softer, paler)", "1360:300")
@@ -183,9 +192,15 @@ d.text((140, PAGE_H - 90), FOOT, font=F_S, fill=SOFT)
 pages.append(img)
 
 # page 5: meadow
-img, d = new_page("Page 5 / 5 - The meadow", "Tall on purpose: 1360 x 1900 px (about 5:7). It's cropped to fit, so avoid big details near the edges.")
+img, d = new_page("Page 5 / 6 - The meadow", "Tall on purpose: 1360 x 1900 px (about 5:7). It's cropped to fit, so avoid big details near the edges.")
 f = 1.3
 box(d, "meadow", (PAGE_W - int(1360 * f)) // 2, 440, f, "Meadow / grass", "1360:1900")
+d.text((140, PAGE_H - 90), FOOT, font=F_S, fill=SOFT)
+pages.append(img)
+
+# page 6: the whole painting
+img, d = new_page("Page 6 / 6 - Option: the whole landscape as ONE painting", "1360 x 2500 px (about 11:20). Sky, hills and meadow in one go, with the sunflower area left empty. Sunflowers still go on page 1.")
+box(d, "scene", (PAGE_W - 1360) // 2, 440, 1.0, "Whole painting (no sunflowers inside)", "1360:2500")
 d.text((140, PAGE_H - 90), FOOT, font=F_S, fill=SOFT)
 pages.append(img)
 
